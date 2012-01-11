@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Library{% endblock %}
+
+{% block extra-head %}
+<script type="text/javascript" src="/media/browse.js"></script>
+{% endblock %}
+
+{% block content %}
+        {% if success %}
+        <div class = "span-24 success large">
+            {{ success }}
+        </div> 
+        {% endif %}
+        {% block form %}{% endblock %}
+      <div id = "book_list">
+        {% for book in book_list %}
+      <div id = "{{ book.id }}" class = "book">
+        <div class="span-5">
+            <img class = "image_link" src="{{ book.image_link }}" />
+        </div>
+        <div class ="span-14">
+        <div class="span-12">
+          <h3 class="title">Title: {{ book.title }}</h3>
+        </div>
+        <div class="span-12 clear">
+          <h3 class="author">Author: {{ book.author }}</h3>
+        </div>
+        {% block book_functions %}
+          <div id = {{ book.id }} class="span-8 clear loan-status">
+          <h3>{% if book.loaned %} 
+               loaned out
+               {% else %} 
+                 {% if user.is_authenticated %}
+                 <a id = {{ book.id }} class="borrow" href= {% url loan book.id %}>borrow</a>
+                 <!-- <button id = {{ book.id }} class="borrow">borrow</button> -->
+                 {% endif %}
+               {% endif %}
+          </h3>
+          </div>
+            {% if user.is_authenticated %}
+            {% if user.is_superuser %}
+            <div class="span-4 clear">
+                <h3><a href= {% url delete book.id %}>delete</a></h3>
+            </div>
+            {% endif %}
+            {% endif %}
+          
+          {% endblock %}
+          
+        
+        </div>
+      <hr />
+      </div>
+        {% endfor %}
+        </div>
+        <div id="debug"></div>
+{% endblock %}

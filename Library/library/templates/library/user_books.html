@@ -1,0 +1,18 @@
+{% extends "library/book_list.html" %}
+
+{% block extra-head %}
+<script type="text/javascript" src="/media/user_books.js"></script>
+{% endblock %}
+
+{% block title %}Your borrowed books{% endblock %}
+
+{% block book_functions %}
+<div class="span-8 clear"> 
+  <h3>{% if book.loaned %} 
+        <a id="{{ book.id }}" class="return" href= {% url return_book book.id %}>return</a> 
+      {% else %} 
+        <a href= {% url loan book.id %}>borrow</a> 
+      {% endif %}
+  </h3>
+</div>
+{% endblock %}

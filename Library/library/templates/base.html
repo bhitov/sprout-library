@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="/media/css/blueprint/screen.css" type="text/css" media="screen, projection">
+<link rel="stylesheet" href="/media/css/blueprint/print.css" type="text/css" media="print">
+<!--[if lt IE 8]>
+  <link rel="stylesheet" href="/media/css/blueprint/ie.css" type="text/css" media="screen, projection">
+<![endif]-->
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
+
+<script type="text/javascript" src="/media/astuff.js"></script>
+
+{% block extra-head %} {% endblock %}
+<title>Development</title>
+</head>
+
+<body>
+  <div class="container">
+    <div class = "span-4">
+      <h2><a href={% url browse %}>Browser</a></h2>
+    </div>
+    {% if user.is_authenticated %}
+    {% if user.is_superuser %}
+    <div class = "span-4">
+      <h2><a href={% url search %}>New Book</a></h2>
+    </div>
+    {% endif %}
+    <div class = "span-4">
+      <h2><a href={% url scan %}>Scan</a></h2>
+    </div>
+    <div class = "span-4">
+      <h2><a href={% url user_books %}>Your Books</a></h2>
+    </div>
+    <div class = "span-4">
+      <h2><a href={% url logout %}>Logout</a></h2>
+    </div>
+    {% else %}
+    <div class = "span-4">
+      <h2><a href={% url register %}>Register</a></h2>
+    </div>
+    <div class = "span-4">
+      <h2><a href={% url login %}>Login</a></h2>
+    </div>
+    {% endif %}
+
+    <hr />    
+    
+    <h1>{% block title %}Library{% endblock %}</h1>
+    <hr />
+    {% if messages %}
+            <ul class="messages">
+            {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+            </ul>
+    {% endif %}
+
+	{% block content %}{% endblock %}
+  </div>
+</body>
+
+</html>

@@ -1,0 +1,31 @@
+{% extends "library/book_list.html" %}
+
+{% block title %} {{ title }} {% endblock %}
+
+{% block extra-head %}
+<!-- <script type="text/javascript" src="/media/astuff.js"></script> -->
+
+<script type="text/javascript" src="/media/search.js"></script>
+{% endblock %}
+
+{% block form %}
+     <form id = "search" action='/books/search/'  method="post">{% csrf_token %}
+        {{ form.as_p }}
+        <button id="search" class="search">button</button>
+     </form> 
+    <hr />
+{% endblock %}
+{% block book_functions %}
+<div class="span-8 clear">
+	<div class="span-4">
+	   <form action={% url create %}  method="post">{% csrf_token %}
+	    <input type="hidden" id="image_link" name="image_link" value="{{ book.image_link }}">
+	    <input type="hidden" id="author" name="author" value="{{ book.author }}">
+	    <input type="hidden" id="title" name="title" value="{{ book.title }}">
+	    <input type="hidden" id="barcode" name="barcode" value={{ book.barcode }}>
+	    <button id='sub'>sub</button>
+	    <!-- <input type="submit" value="Submit" />-->
+	   </form> 
+	</div>
+</div>
+{% endblock %}
