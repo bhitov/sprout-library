@@ -16,6 +16,9 @@ from library.models import Book, create_book
 from library.forms import BookForm, UserForm, BookSearch
 
 def login_required(function):
+    """
+    Login required decorator that uses the messages middleware.
+    """
     def wrapper(request, *args, **kw):
         if not request.user.is_authenticated():
             messages.error(request, "You must be logged in to do that")
@@ -25,6 +28,9 @@ def login_required(function):
     return wrapper
 
 def admin_required(function):
+    """
+    Admin required decorator that uses the messages middleware
+    """
     def wrapper(request, *args, **kw):
         if not (request.user.is_authenticated() and request.user.is_superuser):
             messages.error(request, "Only admins may perform that action")
@@ -34,19 +40,34 @@ def admin_required(function):
     return wrapper
 
 
+#note: this view is orphaned
 def detail(request, book_id):
+    """
+    Displays info for a specific book.
+    """
     entry = get_object_or_404(Book, pk=book_id)
     return render(request,
                   template='index.html',
                   dictionary={'books' : [entry]})
 
+#TODO: convert from deprecated function based generic to class based generic
 def book_list(request):
+    """
+    Displays a list of all books in the library
+    """
     return list_detail.object_list(
                     request,
                     queryset=Book.objects.all(),
                     template_object_name='book')
 
+
+
 def generic_conditional(request, condition, true_message, false_message, to):
+    """
+    Generic status testing for synchronous or asynchronous requests. Responds
+    with true_message if the conditional is met, and false_message otherwise.
+    if the request was synchronous, the user is redirected to 'to'.
+    """
     if condition:
         message = true_message
         message_tag = 'success'
@@ -66,6 +87,9 @@ def generic_conditional(request, condition, true_message, false_message, to):
     
 @admin_required
 def createa(request):
+    """
+    Asynchronous book creation
+    """
     post = request.POST.copy()
     jsondata = {'result' : 'E'}
     try:
@@ -78,6 +102,9 @@ def createa(request):
 
 @admin_required
 def create(request):
+    """
+    Synchronous book creation
+    """
     if request.method == 'POST':
         print request.POST
         form = BookForm(request.POST)
@@ -92,6 +119,9 @@ def create(request):
         
 @login_required
 def scanx(request):
+    """
+    Loans a book to the current user based on the scanned barcode
+    """
     if request.method == 'POST':
         barcode = request.POST['barcode']
         book = get_object_or_404(Book, barcode=barcode)
@@ -104,6 +134,9 @@ def scanx(request):
 
 @admin_required
 def delete(request, book_id):
+    """
+    Removes a book from the library
+    """
     book = get_object_or_404(Book, pk=book_id)
     title = book.title
     book.delete()
@@ -111,6 +144,10 @@ def delete(request, book_id):
     
 @login_required
 def loanx(request, book_id, to='/books/'):
+    """
+    Loans a book to the current user based on the 'borrow' link that
+    the user clicked
+    """
     book = get_object_or_404(Book, pk=book_id)
     return generic_conditional(request, book.loan_book(request.user),
                                "%s has been added to your books" % book.title,
@@ -119,6 +156,9 @@ def loanx(request, book_id, to='/books/'):
 
 @login_required
 def return_book(request, book_id):
+    """
+    Returns a book to the library
+    """
     book = get_object_or_404(Book, pk=book_id)
     return generic_conditional(request, book.return_book(request.user),
                                "%s has been returned" % book.title,
@@ -139,6 +179,9 @@ def register(request):
 
 @login_required
 def user_books(request):
+    """
+    Lists books the user is currently borrowing
+    """
     return list_detail.object_list(
                     request,
                     queryset=request.user.book_set.all(),
@@ -146,101 +189,14 @@ def user_books(request):
                     template_object_name='book')
 
 @admin_required
-def search_results(request):
-    post = request.POST.copy()
-    if post.has_key('barcode'):
-        #####
-        form = BookSearch(request.POST)
-        barcode = form.data['barcode']
-        #####
-        #barcode = post['barcode']
-        url = "https://www.googleapis.com/books/v1/volumes?q=isbn:%s" % post['barcode']
-        try:
-            strng = urlopen(url).read()
-            try:
-                data = simplejson.loads(strng)
-                data = data['items']
-            except:
-                print "json error"
-                raise Exception
-        except:
-            print 'urlopen error barcode: %s' % post['barcode']
-            data = []
-        jsondata = { 'books' : []}
-        for item in data:
-            try:
-                info = item['volumeInfo']
-                book = {'image_link' : info['imageLinks']['thumbnail'],
-                        'author' : info['authors'][0],
-                        'title' : info['title'],
-                        'barcode' : barcode}
-                jsondata['books'].append(book)
-                print book
-            except:
-                pass
-        json = simplejson.dumps(jsondata)
-        return HttpResponse(json, mimetype='application/json')
-
-@admin_required
-def search_google(request):
-    if request.method == 'POST':
-        form = BookSearch(request.POST)
-        barcode = form.data['barcode']
-        url = "https://www.googleapis.com/books/v1/volumes?q=isbn:%s" % barcode
-        try:
-            data = simplejson.loads(urlopen(url).read()).get('items',[])
-        except:
-            print 'urlopen error'
-            data = []
-        books = []
-        for item in data:
-            try:
-                info = item['volumeInfo']
-                book = Book(image_link = info['imageLinks']['thumbnail'],
-                            author=info['authors'][0],
-                            title=info['title'],
-                            barcode=barcode)
-                books.append(book)
-            except:
-                pass
-        return render(request,
-                      'search.html',
-                      {'book_list': books, 'form': form, 
-                       'title' :'Search Google'})
-    else:
-        book = Book(author='a', title='t')
-        book.id = 'dummy'
-        form = BookSearch()
-        return render(request,
-                      'search.html',
-                      {'form': form, 'title' : 'Search Google',
-                       'books' : [book]},)
-
-@admin_required
 def search_googlex(request):
+    """
+    Searches google books for a book with the given barcode (isbn)
+    """
     if request.method == 'POST':
         form = BookSearch(request.POST)
         barcode = form.data['barcode']
         response = google_books.search(barcode)
-        #print "I got the barcode! It is %s" % barcode
-        #url = "https://www.googleapis.com/books/v1/volumes?q=isbn:%s" % barcode
-        #try:
-        #    google_data = simplejson.loads(urlopen(url).read()).get('items',[])
-        #except:
-        ##    print 'urlopen error'
-         #   google_data = []
-        #response = {'book_list': []}
-        #print google_data
-        #for item in google_data:
-        #    try:
-        #        info = item['volumeInfo']
-        #        book = {'image_link' : info['imageLinks']['thumbnail'],
-        #                'author' : info['authors'][0],
-        #                'title' : info['title'],
-        #                'barcode' : barcode}
-        #        response['book_list'].append(book)
-        #    except:
-        #        pass
         print "I passed the loop"
         if request.is_ajax():
             print "I think I am ajax"
